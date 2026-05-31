@@ -81,13 +81,30 @@ elif st.session_state.page_number == 2:
         target_prob = 1/4
         prob_text = "1/4 (0.25)"
 
-    st.markdown("---")
+st.markdown("---")
     st.subheader("🤔 나의 예상 확률은?")
-    user_guess = st.number_input(
-        "실험을 시작하기 전에, 이 사건이 일어날 확률을 소수(0~1 사이)로 입력해보세요!", 
-        min_value=0.0, max_value=1.0, value=0.5, step=0.05
+    
+    # 1. 숫자 대신 텍스트로 입력받기 (분수, 소수 모두 가능)
+    user_guess_str = st.text_input(
+        "실험을 시작하기 전에, 이 사건이 일어날 확률을 입력해보세요! (예: 1/6, 1/2 또는 0.5)", 
+        value="1/2"
     )
     
+    # 2. 입력받은 글자를 컴퓨터가 계산할 수 있는 소수로 변환하는 과정
+    user_guess = None
+    try:
+        if "/" in user_guess_str:
+            num, denom = user_guess_str.split("/")
+            user_guess = float(num) / float(denom)
+        else:
+            user_guess = float(user_guess_str)
+            
+        # 확률이 0과 1 사이가 아니면 에러 처리
+        if not (0.0 <= user_guess <= 1.0):
+            user_guess = None
+    except:
+        pass # 이상한 글자를 치면 user_guess는 계속 None 상태로 남음
+
     st.markdown("---")
     st.subheader("🚀 시뮬레이션 설정")
     trials = st.number_input(
@@ -95,52 +112,55 @@ elif st.session_state.page_number == 2:
         min_value=10, max_value=1000000, value=1000, step=100
     )
     
-    if st.button("실험 시작!"):
-        with st.spinner('열심히 시뮬레이션을 돌리는 중입니다...'):
-            if "동전" in exp_type:
-                results = np.random.randint(0, 2, size=trials) 
-                success = (results == 0).astype(int) 
-            elif "주사위" in exp_type:
-                results = np.random.randint(1, 7, size=trials) 
-                success = (results == 1).astype(int) 
-            else:
-                results = np.random.randint(1, 5, size=trials)
-                success = (results == 1).astype(int)
+    # 3. 제대로 된 확률이 입력되었을 때만 실험 시작 버튼 활성화
+    if user_guess is None:
+        st.error("⚠️ 올바른 확률 값(0~1 사이의 소수 또는 분수)을 입력해주세요! (예: 1/6, 0.25)")
+    else:
+        if st.button("실험 시작!"):
+            with st.spinner('열심히 시뮬레이션을 돌리는 중입니다...'):
+                if "동전" in exp_type:
+                    results = np.random.randint(0, 2, size=trials) 
+                    success = (results == 0).astype(int) 
+                elif "주사위" in exp_type:
+                    results = np.random.randint(1, 7, size=trials) 
+                    success = (results == 1).astype(int) 
+                else:
+                    results = np.random.randint(1, 5, size=trials)
+                    success = (results == 1).astype(int)
+                    
+                cumulative_success = np.cumsum(success)
+                trial_numbers = np.arange(1, trials + 1)
+                relative_frequencies = cumulative_success / trial_numbers
                 
-            cumulative_success = np.cumsum(success)
-            trial_numbers = np.arange(1, trials + 1)
-            relative_frequencies = cumulative_success / trial_numbers
-            
-            chart_data = pd.DataFrame({
-                "시행 횟수": trial_numbers,
-                "상대도수 (실제 결과)": relative_frequencies,
-                f"수학적 확률 ({prob_text})": target_prob,
-                "나의 예상 확률": user_guess
-            })
-            
-            st.line_chart(
-                chart_data, 
-                x="시행 횟수", 
-                y=["상대도수 (실제 결과)", f"수학적 확률 ({prob_text})", "나의 예상 확률"]
-            )
-            
-            final_rate = relative_frequencies[-1]
-            st.success(
-                f"**총 {trials:,}번** 실험 완료! \n\n"
-                f"👉 **나의 예상:** {user_guess:.4f} \n"
-                f"👉 **실제 상대도수:** {final_rate:.4f} \n"
-                f"👉 **수학적 확률:** {target_prob:.4f}"
-            )
-            
-            # --- 새롭게 추가된 설명 부분! ---
-            st.info(
-                f"💡 **선생님의 꿀팁: 만 번이나 던졌는데 왜 정확히 {target_prob:.4f}이 아닐까요?**\n\n"
-                f"수학적 확률({target_prob:.4f})은 동전이나 주사위의 모양이 완벽하게 대칭이라는 가정하에 계산된 **'이상적인 정답'**이에요. "
-                "하지만 실제 실험에서는 늘 **'우연'**이 작용하죠. "
-                "10,000번이 엄청 큰 숫자 같지만 무한대에 비하면 여전히 작은 숫자이기 때문에, 0.5048처럼 미세한 오차가 남는 거랍니다. "
-                "중요한 건, 횟수를 더 무한히 늘려갈수록 이 우연의 오차들이 서로 깎여나가면서 결국 수학적 확률에 한없이 가까워진다는 사실이에요!"
-            )
-    
+                chart_data = pd.DataFrame({
+                    "시행 횟수": trial_numbers,
+                    "상대도수 (실제 결과)": relative_frequencies,
+                    f"수학적 확률 ({frac_text})": target_prob,
+                    "나의 예상 확률": user_guess
+                })
+                
+                st.line_chart(
+                    chart_data, 
+                    x="시행 횟수", 
+                    y=["상대도수 (실제 결과)", f"수학적 확률 ({frac_text})", "나의 예상 확률"]
+                )
+                
+                final_rate = relative_frequencies[-1]
+                st.success(
+                    f"**총 {trials:,}번** 실험 완료! \n\n"
+                    f"👉 **나의 예상:** {user_guess_str} (약 {user_guess:.4f}) \n"
+                    f"👉 **실제 상대도수:** {final_rate:.4f} \n"
+                    f"👉 **수학적 확률:** {frac_text} (약 {target_prob:.4f})"
+                )
+                
+                st.info(
+                    f"💡 **선생님의 꿀팁: 엄청 많이 던졌는데 왜 정확히 {frac_text}이 아닐까요?**\n\n"
+                    f"수학적 확률인 **{frac_text}**은 주사위나 동전의 모양이 완벽하게 대칭이라는 가정하에 계산된 '이상적인 정답'이에요. "
+                    "하지만 실제 실험에서는 늘 '우연'이 작용하죠. "
+                    f"10,000번이 엄청 큰 숫자 같지만 무한대에 비하면 여전히 작은 숫자이기 때문에, {final_rate:.4f}처럼 미세한 오차가 남는 거랍니다. "
+                    f"중요한 건, 횟수를 계속 늘려갈수록 이 우연의 오차들이 서로 깎여나가면서 결국 수학적 확률({frac_text})에 한없이 가까워진다는 사실이에요!"
+                )
+                
     st.markdown("---")
     if st.button("⬅️ 개념 페이지로 돌아가기"):
         st.session_state.page_number = 1
