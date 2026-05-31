@@ -1,3 +1,51 @@
+import streamlit as st
+import numpy as np
+import pandas as pd
+
+# 탭 제목 및 아이콘 설정
+st.set_page_config(page_title="큰 수의 법칙", page_icon="🎲")
+
+# 현재 페이지 상태를 저장하는 공간
+if 'page_number' not in st.session_state:
+    st.session_state.page_number = 1
+
+# ---------------------------------------------------------
+# 1페이지: 개념 깊이 알아보기 및 생각 열기 질문
+# ---------------------------------------------------------
+if st.session_state.page_number == 1:
+    st.title("🎲 시뮬레이션으로 만나는 큰 수의 법칙")
+    
+    st.markdown("---")
+    st.subheader("📖 개념 깊이 알아보기")
+    
+    st.info(
+        "우리는 주사위를 던졌을 때 특정 눈이 나올 확률이 **1/6** 이라는 것을 알고 있습니다. "
+        "이처럼 머릿속으로 계산해 낸 이상적인 확률을 **'수학적 확률'**이라고 합니다.\n\n"
+        "하지만 실제로 주사위를 6번 던진다고 해서 무조건 원하는 눈이 딱 1번만 나올까요? "
+        "직접 실험해서 얻어낸 결과를 **'통계적 확률(상대도수)'**이라고 합니다. "
+        "처음에는 이 둘이 서로 달라서 당황스러울 수 있어요."
+    )
+    
+    st.success(
+        "**💡 큰 수의 법칙이란?**\n\n"
+        "실험을 하는 횟수(시행 횟수)를 100번, 1,000번, 10,000번으로 계속 늘려가면 어떻게 될까요? "
+        "놀랍게도 우리가 직접 구한 **통계적 확률**이 이론적인 **수학적 확률**에 점점 가까워집니다. "
+        "이것이 바로 확률과 통계에서 아주 중요한 **큰 수의 법칙**입니다!"
+    )
+    
+    st.markdown("---")
+    st.subheader("🤔 여기서 잠깐! 생각해볼 질문")
+    st.warning(
+        "친구가 동전을 **10번** 던졌는데 앞면이 **8번**이나 나왔습니다. "
+        "친구는 *'이 동전은 앞면이 훨씬 잘 나오는 조작된 동전이야!'*라고 주장하고 있어요. "
+        "친구의 주장이 맞을까요? \n\n"
+        "만약 동전을 **10,000번** 던졌을 때 앞면이 **8,000번** 나왔다면 어떨까요?"
+    )
+    
+    if st.button("정답 확인 및 시뮬레이션 하러 가기 🚀"):
+        st.session_state.page_number = 2
+        st.rerun()
+
 # ---------------------------------------------------------
 # 2페이지: 정답 해설 및 다양한 시뮬레이션
 # ---------------------------------------------------------
@@ -14,7 +62,6 @@ elif st.session_state.page_number == 2:
     st.markdown("---")
     st.subheader("🎲 어떤 실험을 해볼까요?")
     
-    # 1. 예시 추가: 동전, 주사위에 이어 4색 팽이 추가
     exp_type = st.radio(
         "실험 도구를 선택해주세요.", 
         [
@@ -24,7 +71,6 @@ elif st.session_state.page_number == 2:
         ]
     )
     
-    # 선택된 실험에 따른 수학적 확률 세팅
     if "동전" in exp_type:
         target_prob = 1/2
         prob_text = "1/2 (0.5)"
@@ -37,7 +83,6 @@ elif st.session_state.page_number == 2:
 
     st.markdown("---")
     st.subheader("🤔 나의 예상 확률은?")
-    # 2. 학생의 예상 확률 입력받기
     user_guess = st.number_input(
         "실험을 시작하기 전에, 이 사건이 일어날 확률을 소수(0~1 사이)로 입력해보세요!", 
         min_value=0.0, max_value=1.0, value=0.5, step=0.05
@@ -45,9 +90,8 @@ elif st.session_state.page_number == 2:
     
     st.markdown("---")
     st.subheader("🚀 시뮬레이션 설정")
-    # 3. 한도를 크게 늘린 시행 횟수 입력 (최대 100만 번)
     trials = st.number_input(
-        "몇 번 실험할까요? (직접 숫자를 입력하세요. 최대 100만 번!)", 
+        "몇 번 실험할까요? (최대 100만 번!)", 
         min_value=10, max_value=1000000, value=1000, step=100
     )
     
@@ -60,7 +104,6 @@ elif st.session_state.page_number == 2:
                 results = np.random.randint(1, 7, size=trials) 
                 success = (results == 1).astype(int) 
             else:
-                # 4색 팽이 (1~4 중 1을 빨간색으로 간주)
                 results = np.random.randint(1, 5, size=trials)
                 success = (results == 1).astype(int)
                 
@@ -68,7 +111,6 @@ elif st.session_state.page_number == 2:
             trial_numbers = np.arange(1, trials + 1)
             relative_frequencies = cumulative_success / trial_numbers
             
-            # 그래프 데이터 정리 (나의 예상 확률 선 추가!)
             chart_data = pd.DataFrame({
                 "시행 횟수": trial_numbers,
                 "상대도수 (실제 결과)": relative_frequencies,
