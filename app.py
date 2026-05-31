@@ -71,26 +71,27 @@ elif st.session_state.page_number == 2:
         ]
     )
     
+    # 선택된 실험에 따른 수학적 확률 세팅
     if "동전" in exp_type:
         target_prob = 1/2
-        prob_text = "1/2 (0.5)"
+        frac_text = "1/2"
     elif "주사위" in exp_type:
         target_prob = 1/6
-        prob_text = "1/6 (약 0.1667)"
+        frac_text = "1/6"
     else:
         target_prob = 1/4
-        prob_text = "1/4 (0.25)"
+        frac_text = "1/4"
 
-st.markdown("---")
+    st.markdown("---")
     st.subheader("🤔 나의 예상 확률은?")
     
-    # 1. 숫자 대신 텍스트로 입력받기 (분수, 소수 모두 가능)
+    # 숫자 대신 텍스트로 입력받기 (분수, 소수 모두 가능)
     user_guess_str = st.text_input(
         "실험을 시작하기 전에, 이 사건이 일어날 확률을 입력해보세요! (예: 1/6, 1/2 또는 0.5)", 
         value="1/2"
     )
     
-    # 2. 입력받은 글자를 컴퓨터가 계산할 수 있는 소수로 변환하는 과정
+    # 입력받은 글자를 계산 가능한 숫자로 변환
     user_guess = None
     try:
         if "/" in user_guess_str:
@@ -99,11 +100,10 @@ st.markdown("---")
         else:
             user_guess = float(user_guess_str)
             
-        # 확률이 0과 1 사이가 아니면 에러 처리
         if not (0.0 <= user_guess <= 1.0):
             user_guess = None
     except:
-        pass # 이상한 글자를 치면 user_guess는 계속 None 상태로 남음
+        pass
 
     st.markdown("---")
     st.subheader("🚀 시뮬레이션 설정")
@@ -112,7 +112,7 @@ st.markdown("---")
         min_value=10, max_value=1000000, value=1000, step=100
     )
     
-    # 3. 제대로 된 확률이 입력되었을 때만 실험 시작 버튼 활성화
+    # 제대로 된 확률이 입력되었을 때만 실험 시작 버튼 활성화
     if user_guess is None:
         st.error("⚠️ 올바른 확률 값(0~1 사이의 소수 또는 분수)을 입력해주세요! (예: 1/6, 0.25)")
     else:
@@ -160,7 +160,7 @@ st.markdown("---")
                     f"10,000번이 엄청 큰 숫자 같지만 무한대에 비하면 여전히 작은 숫자이기 때문에, {final_rate:.4f}처럼 미세한 오차가 남는 거랍니다. "
                     f"중요한 건, 횟수를 계속 늘려갈수록 이 우연의 오차들이 서로 깎여나가면서 결국 수학적 확률({frac_text})에 한없이 가까워진다는 사실이에요!"
                 )
-                
+    
     st.markdown("---")
     if st.button("⬅️ 개념 페이지로 돌아가기"):
         st.session_state.page_number = 1
